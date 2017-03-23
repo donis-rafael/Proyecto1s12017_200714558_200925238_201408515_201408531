@@ -1,0 +1,14 @@
+digraph G{
+nodoR[label="Inicio", style = filled, fillcolor = "#FF4000", group = rr]
+{rank = same; nodoR nodoc2144231525}
+nodoR -> nodoc2144231525
+nodoc2144231525[label = "uno", style = filled, fillcolor = "#FF4000", group = r2144231525]
+nodoR -> nodol3252086
+nodol3252086[label = "dos", style = filled, fillcolor = "#FF4000", group = rr]
+subgraph s2144231525{
+nodoc2144231505l2144231505[label = "jose", style = filled, fillcolor = "#FF4000", group = r2144231525]
+}
+nodol3252086 -> nodoc2144231505l2144231505
+{rank = same; nodol3252086 nodoc2144231505l2144231505}
+nodoc2144231525 -> nodoc2144231505l2144231505
+}
