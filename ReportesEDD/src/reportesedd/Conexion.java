@@ -9,8 +9,10 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.logging.Level;
@@ -55,5 +57,56 @@ public class Conexion {
         
             return respues;
     }
+    
+    public static void Conection_API(String parametro){
+
+        
+        try {
+            String path="http://192.168.43.122:58402/api/btree/?"+parametro;
+            System.out.println(path);
+            URL url = new URL(path);
+            //URL url = new URL("http://localhost:65359/api/btree");
+            HttpURLConnection coneccion = (HttpURLConnection) url.openConnection();
+            coneccion.setRequestMethod("GET");
+            coneccion.connect();
+            InputStream is = coneccion.getInputStream();
+            
+            System.out.println("resuelto");
+            coneccion.disconnect();
+            //System.out.println("***************************************************** "+resultado);
+
+        }catch (Exception e){
+
+        }
+        System.out.println("termino conexion");
+    }
+    
+    public static void Conection_Llenar(String parametro){
+
+        
+        try {
+            String path="http://192.168.43.122:58402/api/btree/?"+parametro;
+            System.out.println(path);
+            URL url = new URL(path);
+            //URL url = new URL("http://localhost:65359/api/btree");
+            HttpURLConnection coneccion = (HttpURLConnection) url.openConnection();
+            System.out.println("resuelto  1 ");
+            coneccion.setRequestMethod("GET");
+            System.out.println("resuelto  2 ");
+            coneccion.connect();
+            System.out.println("resuelto  3");
+            InputStream is = coneccion.getInputStream();
+            System.out.println("resuelto  ");
+            
+            coneccion.disconnect();
+            System.out.println("***************************************************** ");
+
+        }catch (Exception e){
+
+        }
+        System.out.println("termino conexion");
+    }
+    
+    
     
 }

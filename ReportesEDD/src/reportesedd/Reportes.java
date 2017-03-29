@@ -11,14 +11,26 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.RenderingHints;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
+import javax.swing.Timer;
+import static reportesedd.ReportesEDD.rb;
 
 /**
  *
@@ -29,21 +41,70 @@ public class Reportes extends javax.swing.JFrame {
     /**
      * Creates new form Reportes
      */
+    String aUsuarios;
+    String aEmpresas;
+    String aDeptos;
+    static RequestBody rb;
+    
     public Reportes(String usuarios, String empresas, String deptos) {
         initComponents();
         this.setLocationRelativeTo(null);
 
         //AQUI HAY QUE ESPLITEAR LOS STRINGS Y CARGARLOS A LOS COMBOBOX
+        cargarCombosUsuarios(usuarios);
+        cargarCombosEmpresas(empresas);
+        cargarCombosDeptos(deptos);
+        aUsuarios=usuarios;
+        aEmpresas=empresas;
+        aDeptos = deptos;
+        Timer t = new Timer(3000, new ActionListener()
+        {
+            public void actionPerformed(ActionEvent e)
+            {
+                rb = new FormEncodingBuilder().add("p","p").build();//agregar parametros
+                String usuarios = Conexion.consultarConString("listarUsuarios",rb);
+                rb = new FormEncodingBuilder().add("p","p").build();//agregar parametros
+                String empresas = Conexion.consultarConString("empresas",rb);
+                rb = new FormEncodingBuilder().add("p","p").build();//agregar parametros
+                String deptos = Conexion.consultarConString("departamentos",rb);
+                if(!usuarios.equals(aUsuarios)){
+                    jComboBox1.removeAllItems();
+                    cargarCombosUsuarios(usuarios);
+                    aUsuarios=usuarios;
+                }
+                if(!empresas.equals(aEmpresas)){
+                    jComboBox2.removeAllItems();
+                    aEmpresas=empresas;
+                    cargarCombosEmpresas(empresas);
+                }
+                if(!deptos.equals(aDeptos)){
+                    jComboBox3.removeAllItems();
+                    aDeptos=deptos;
+                    cargarCombosDeptos(deptos);
+                }
+            }
+        }
+        );
+        
+        t.start();
+        //String envio="1";
+        //Conexion.Conection_Llenar("cadena=135465X,ASDASD,ASDASD,ASDSD,SFSDF,SDFDFS,TYRT");
+        
+    }
+    private void cargarCombosUsuarios(String usuarios){
+        
         String user[];
         try {
+            System.out.println(usuarios);
             user = usuarios.split(",");
-            for (int i = 0; i < user.length; i++) {
+            for (int i = 0; i <= user.length-1; i++) {
                 jComboBox1.addItem(user[i]);
             }
         } catch (Exception ex) {
             jComboBox1.addItem(usuarios);
         }
-        
+    }
+    private void cargarCombosEmpresas(String empresas){
         try {
             String empresa[] = empresas.split(",");
             for (int i = 0; i < empresa.length; i++) {
@@ -52,7 +113,8 @@ public class Reportes extends javax.swing.JFrame {
         } catch (Exception ex) {
             jComboBox2.addItem(empresas);
         }
-        
+    }
+    private void cargarCombosDeptos(String deptos){
         try {
             String depto[] = deptos.split(",");
             for (int i = 0; i < depto.length; i++) {
@@ -61,7 +123,6 @@ public class Reportes extends javax.swing.JFrame {
         } catch (Exception ex) {
             jComboBox3.addItem(deptos);
         }
-        
     }
     
     Visor v;
@@ -291,6 +352,7 @@ public class Reportes extends javax.swing.JFrame {
             
             v.jLabel1.setText(null);
             v.jLabel1.setIcon(icono);
+            v.ima = icono;
             
         } catch (IOException ex) {
         }
@@ -388,10 +450,40 @@ public class Reportes extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
-        // TODO add your handling code here:
-        v = new Visor();
-        v.setVisible(true);
-        v.setTitle("Arbol B");
+        try {
+            // TODO add your handling code here:
+            Conexion.Conection_API("imagen=1");
+            v = new Visor();
+            URL url = new URL("http://192.168.43.122:58402/Arbol_B.png");
+            InputStream in = new BufferedInputStream(url.openStream());
+            OutputStream out = new BufferedOutputStream(new FileOutputStream("arbol.png"));
+            for(int i;(i=in.read())!=-1;){
+                out.write(i);
+            }
+            in.close();
+            out.close();
+            
+            String ruta = new File("").getAbsolutePath();
+                ruta = ruta + "\\arbol.png";
+
+                ImageIcon image = new ImageIcon(ruta);
+                Icon icono = new ImageIcon(image.getImage().
+                        getScaledInstance(image.getIconWidth(), image.getIconHeight(),
+                                Image.SCALE_DEFAULT));
+
+                v.jLabel1.setText(null);
+                v.jLabel1.setIcon(icono);
+                
+            v.setVisible(true);
+            v.setTitle("Arbol B");
+            
+            
+        } catch (MalformedURLException ex) {
+            Logger.getLogger(Reportes.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(Reportes.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
     }//GEN-LAST:event_jButton4ActionPerformed
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
@@ -403,40 +495,40 @@ public class Reportes extends javax.swing.JFrame {
         RequestBody rb = new FormEncodingBuilder().add("usuario", usuario).add("empresa", empresa).add("departamento", depto).build();//agregar parametros
         InputStream is = Conexion.consultar("graficarAVL", rb);
         try {
-            FileOutputStream fos = new FileOutputStream("avl.jpg");
-            byte[] array = new byte[1000];
-            
-            int leido = is.read(array);
-            while (leido > 0) {
-                fos.write(array, 0, leido);
-                leido = is.read(array);
+                FileOutputStream fos = new FileOutputStream("avl.jpg");
+                byte[] array = new byte[1000];
+
+                int leido = is.read(array);
+                while (leido > 0) {
+                    fos.write(array, 0, leido);
+                    leido = is.read(array);
+                }
+                is.close();
+                fos.close();
+
+                String ruta = new File("").getAbsolutePath();
+                ruta = ruta + "\\avl.jpg";
+
+                ImageIcon image = new ImageIcon(ruta);
+                Icon icono = new ImageIcon(image.getImage().
+                        getScaledInstance(image.getIconWidth(), image.getIconHeight(),
+                                Image.SCALE_DEFAULT));
+
+                v.jLabel1.setText(null);
+                v.jLabel1.setIcon(icono);
+
+            } catch (IOException ex) {
             }
-            is.close();
-            fos.close();
-            
-            String ruta = new File("").getAbsolutePath();
-            ruta = ruta + "\\avl.jpg";
-            
-            ImageIcon image = new ImageIcon(ruta);
-            Icon icono = new ImageIcon(image.getImage().
-                    getScaledInstance(image.getIconWidth(), image.getIconHeight(),
-                            Image.SCALE_DEFAULT));
-            
-            v.jLabel1.setText(null);
-            v.jLabel1.setIcon(icono);
-            
-        } catch (IOException ex) {
-        }
-        
-        v.setTitle("AVL");
-        v.setVisible(true);
+
+            v.setTitle("AVL");
+            v.setVisible(true);
     }//GEN-LAST:event_jButton5ActionPerformed
 
     private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
         String usuario = this.jComboBox1.getSelectedItem().toString();
         String empresa = this.jComboBox2.getSelectedItem().toString();
         String depto = this.jComboBox3.getSelectedItem().toString();
-        
+        //String res = Conexion.Conection_API("7");
 
     }//GEN-LAST:event_jButton6ActionPerformed
 

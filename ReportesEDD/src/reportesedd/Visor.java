@@ -5,18 +5,30 @@
  */
 package reportesedd;
 
+import java.awt.image.BufferedImage;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import com.mortennobel.imagescaling.ResampleOp;
+import java.awt.Image;
+import javax.swing.JLabel;
+
 /**
  *
  * @author KMMG
  */
 public class Visor extends javax.swing.JFrame {
 
+    double zoom = 0.0;
+    public Icon ima = null;
+    private BufferedImage image = (BufferedImage) ((Image)ima);
+
     /**
      * Creates new form Matriz
      */
     public Visor() {
         initComponents();
-        
+        this.setLocationRelativeTo(null);
+
         /*VISOR DE IMG POR URL
         
         public static void main(String[] args) {
@@ -54,9 +66,7 @@ public class Visor extends javax.swing.JFrame {
     }
 }
         
-        */
-        
-        
+         */
     }
 
     /**
@@ -68,33 +78,57 @@ public class Visor extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jScrollPane2 = new javax.swing.JScrollPane();
         jScrollPane1 = new javax.swing.JScrollPane();
         jLabel1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         jLabel1.setText("IMAGEN");
+        jLabel1.addMouseWheelListener(new java.awt.event.MouseWheelListener() {
+            public void mouseWheelMoved(java.awt.event.MouseWheelEvent evt) {
+                jLabel1MouseWheelMoved(evt);
+            }
+        });
         jScrollPane1.setViewportView(jLabel1);
+
+        jScrollPane2.setViewportView(jScrollPane1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 477, Short.MAX_VALUE)
-                .addContainerGap())
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 534, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 333, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 343, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void jLabel1MouseWheelMoved(java.awt.event.MouseWheelEvent evt) {//GEN-FIRST:event_jLabel1MouseWheelMoved
+        int notches = evt.getWheelRotation();
+        double temp = zoom - (notches * 0.2);
+        // minimum zoom factor is 1.0
+        temp = Math.max(temp, 1.0);
+        if (temp != zoom) {
+            zoom = temp;
+            resizeImage(jLabel1);
+        }
+    }//GEN-LAST:event_jLabel1MouseWheelMoved
+
+    public void resizeImage(JLabel a) {
+        //System.out.println(zoom);
+        //ResampleOp resampleOp = new ResampleOp((int) (ima.getIconWidth()* zoom), (int) (ima.getIconHeight() * zoom));
+        ResampleOp resampleOp = new ResampleOp((int) (image.getWidth() * zoom), (int) (image.getHeight() * zoom));
+        BufferedImage resizedIcon = resampleOp.filter(image, null);
+        Icon imageIcon = new ImageIcon(resizedIcon);
+        a.setIcon(imageIcon);
+
+        this.jScrollPane2.setViewportView(a);
+    }
 
     /**
      * @param args the command line arguments
@@ -135,5 +169,6 @@ public class Visor extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     public javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     // End of variables declaration//GEN-END:variables
 }
