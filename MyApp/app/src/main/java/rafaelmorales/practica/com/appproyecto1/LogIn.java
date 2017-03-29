@@ -13,7 +13,17 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Toast;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.BasicResponseHandler;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.*;
 
 import com.squareup.okhttp.FormEncodingBuilder;
 import com.squareup.okhttp.OkHttpClient;
@@ -21,6 +31,11 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -32,7 +47,8 @@ public class LogIn extends AppCompatActivity {
     EditText txtUsuario, txtContrasena, txtEmpresa, txtDepartamento;
     public static OkHttpClient clienteWeb = new OkHttpClient();
     ProgressDialog cuadroDeDialogo;
-    String respuesta="";
+    Object respuesta;
+    String response="";
     //Toast tos;
 
     @Override
@@ -72,7 +88,7 @@ public class LogIn extends AppCompatActivity {
 
         @Override
         protected Void doInBackground(Void... params) {
-            Log.i("Vik", "doInBackground");
+            //Log.i("Vik", "doInBackground");
 
 
             RequestBody formBody = new FormEncodingBuilder()
@@ -89,14 +105,14 @@ public class LogIn extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Void result) {
-            Log.i("Vik", "onPostExecute");
+            //Log.i("Vik", "onPostExecute");
             cuadroDeDialogo.dismiss();
         }
 
 
         @Override
         protected void onPreExecute() {
-            Log.i("Vik", "onPreExecute");
+            //Log.i("Vik", "onPreExecute");
             super.onPreExecute();
             cuadroDeDialogo = new ProgressDialog(LogIn.this);
             cuadroDeDialogo.setMessage("Cargando...");
@@ -118,12 +134,12 @@ public class LogIn extends AppCompatActivity {
             Request req = new Request.Builder().url(url).post(formBody).build();
             Response resp = clienteWeb.newCall(req).execute();
             respuesta = resp.body().string();
-            //System.out.println(respuesta);
-
-            //return respuesta;
 
             if(respuesta.equals("existe")){
                 Intent intent = new Intent(LogIn.this, MenuInicial.class);
+                MenuInicial.usuario = user;
+                MenuInicial.departamento = depto;
+                MenuInicial.empresa = enterprice;
                 startActivity(intent);
             }else{
                 AlertDialog.Builder build = new AlertDialog.Builder(LogIn.this);
@@ -139,8 +155,6 @@ public class LogIn extends AppCompatActivity {
                         });
                 AlertDialog alerta = build.create();
                 alerta.show();
-                //tos = Toast.makeText(LogIn.this, "Información Incorrecta", Toast.LENGTH_SHORT);
-                //tos.show();
             }
 
         } catch(MalformedURLException ex){
@@ -150,4 +164,5 @@ public class LogIn extends AppCompatActivity {
             //
         }
     }
+
 }
