@@ -95,7 +95,8 @@ public class delete extends HttpServlet {
             String empresa = (String)s.getAttribute("empresa");
             String depto = (String)s.getAttribute("depto");
             
-            boolean exito = eliminarActivo(user,empresa,depto,id);            
+            boolean exito = eliminarActivo(user,empresa,depto,id);
+            Conexion.Conection_API_EliminarB("elimina="+id+","+user+","+empresa+","+depto);
             if(exito==true){
                 out.println("<script type=\"text/javascript\">alert(\"Se eliminó el activo\");"
                         + "window.location.href='delete-article.jsp'; </script> ");
