@@ -3,7 +3,44 @@ from flask import Flask, request, send_file
 path = "C:\Users\Ottoniel\Documents\GitHub\servidorPy\\"
 app = Flask("Servidor de Usuarios y Activos")
 escritorio = os.path.expanduser("~/Desktop")
+class nodoLista:
+    def __init__(self, activo):
+        self.siguiente = None
+        self.activo = activo
+class listaParaReporte:
+    def __init__(self):
+        self.cabeza = None
+    def insertar(self, nuevo):
+        if self.cabeza==None:
+            self.cabeza = nuevo
+        else:
+            nuevo.siguiente = self.cabeza
+            self.cabeza = nuevo
+        return self.cabeza
 
+    def obtenerHASH(self, objeto):
+        id = hash(objeto)
+        if int(id) < 0:
+            return str((-1 * id))
+        return str(id)
+    def graficar(self):
+        if self.cabeza == None:
+            print "esta vacia"
+            return
+
+        temporal = self.cabeza
+        file = open(escritorio+"\\reporte.dot", "w")
+        file.write("digraph G{\n")
+        while temporal!=None:
+            file.write("nodo" + self.obtenerHASH(temporal) + "[label=\"" + temporal.activo.id+"\n"+temporal.activo.nombre + "\", style = filled, shape= \"box\", fillcolor=\"blue:cyan\", gradientangle=\"270\"]\n")
+            if temporal.siguiente!=None:
+                file.write("nodo"+self.obtenerHASH(temporal)+" -> "+"nodo"+self.obtenerHASH(temporal.siguiente)+"\n")
+            temporal = temporal.siguiente
+        file.write("}")
+        file.close()
+        print "crea el reporte"
+        os.system("dot -Tpng "+escritorio+"\\reporte.dot > "+escritorio+"\\reporte.png")
+reporte = listaParaReporte()
 class nodoUsuario:
     siguiente = None
     anterior = None
@@ -473,27 +510,55 @@ class listaCabecerasHorizontales:
                     aux = aux.abajo
             temporal = temporal.siguiente
         return "No tiene"
-    def reportePorEmpresa(self):
+    def reportePorEmpresa(self, empresa):
         temporal = self.primero
         reporte.cabeza=None
+        while temporal!=None:
+            if temporal.empresa == empresa:
+                aux = temporal.lista.primero
+                while aux!=None:
+                    aux2 = aux.lista.primero
+                    while aux2!=None:
+                        aux2.activos.listarAReporte(aux2.activos.raizG)
+                        print "lo encuentra"
+                        aux2=aux2.siguiente
+                    aux = aux.abajo
+            temporal = temporal.siguiente
+        reporte.graficar()
+    def devolverEmpresas(self):
+        cadena = ""
+        temporal = self.primero
+        while temporal!=None:
+
+            if temporal.siguiente==None:
+                cadena+=temporal.empresa
+                return cadena
+            else:
+                cadena += temporal.empresa + ","
+
+            temporal = temporal.siguiente
+        return cadena
+    def todosLosActivos(self):
+        temporal = self.primero
+        conca = ""
         while temporal!=None:
             aux = temporal.lista.primero
             while aux!=None:
                 aux2 = aux.lista.primero
                 while aux2!=None:
-                    aux2.activos.listarAReporte()
-                    aux2=aux2.siguiente
+                    conca +=aux2.activos.retornarID(aux2.activos.raizG)+"\n"
+                    aux2 = aux2.siguiente
                 aux = aux.abajo
             temporal = temporal.siguiente
-        reporte.graficar()
+        return conca
+
+
 class listaCabecerasVerticales:
     concatenador = ""
     bandera = False
-
     def __init__(self):
         self.primero = None
         self.ultimo = None
-
     def insertar(self, departamento):
         nuevo = nodoCabezaVertical(departamento)
         if self.primero == None:
@@ -522,7 +587,6 @@ class listaCabecerasVerticales:
                     temporal.anterior = nuevo
                     return
                 temporal = temporal.siguiente
-
     def eliminar(self, departamento):
         if self.primero == None:
             return
@@ -547,14 +611,12 @@ class listaCabecerasVerticales:
                     return
             else:
                 temporal = temporal.siguiente
-
     def concatenar(self, pedaso):
         if self.bandera == False:
             self.concatenador = self.concatenador + pedaso
             self.bandera = True
         else:
             self.concatenador = self.concatenador + "," + pedaso
-
     def buscarLetra(self, letra):
         if self.primero == None:
             return "no existe"
@@ -573,7 +635,6 @@ class listaCabecerasVerticales:
                 self.bandera = False
                 return resultado
             temporal = temporal.siguiente
-
     def existeV(self, departamento):
         if self.primero == None:
             return False
@@ -583,7 +644,6 @@ class listaCabecerasVerticales:
                 return True
             temporal = temporal.siguiente
         return False
-
     def noTieneNada(self, indice):
         temporal = self.primero
         while temporal != None:
@@ -592,19 +652,32 @@ class listaCabecerasVerticales:
                     return True
             temporal = temporal.siguiente
         return False
-    def reportePorDepartamento(self):
+    def reportePorDepartamento(self, departamento):
         temporal = self.primero
         reporte.cabeza=None
         while temporal!=None:
-            aux = temporal.lista.primero
-            while aux!=None:
-                aux2 = aux.lista.primero
-                while aux2!=None:
-                    aux2.activos.listarAReporte()
-                    aux2=aux2.siguiente
-                aux = aux.derecha
+            if temporal.departamento == departamento:
+                aux = temporal.lista.primero
+                while aux!=None:
+                    aux2 = aux.lista.primero
+                    while aux2!=None:
+                        aux2.activos.listarAReporte(aux2.activos.raizG)
+                        aux2=aux2.siguiente
+                    aux = aux.derecha
             temporal = temporal.siguiente
         reporte.graficar()
+    def listarDepartamentos(self):
+        cadena = ""
+        temporal = self.primero
+        while temporal != None:
+
+            if temporal.siguiente == None:
+                cadena += temporal.departamento
+                return cadena
+            else:
+                cadena += temporal.departamento + ","
+            temporal = temporal.siguiente
+        return cadena
 class matriz:
     def __init__(self):
         self.verticales = listaCabecerasVerticales()
@@ -623,6 +696,19 @@ class matriz:
                 aux = aux.abajo
             temporal = temporal.siguiente
         return cadena+"0"
+    def retornarUsu(self):
+        cadena = ""
+        temporal = self.horizontales.primero
+        while temporal != None:
+            aux = temporal.lista.primero
+            while aux != None:
+                aux2 = aux.lista.primero
+                while aux2 != None:
+                    cadena += aux2.usuario + ","
+                    aux2 = aux2.siguiente
+                aux = aux.abajo
+            temporal = temporal.siguiente
+        return cadena
     def insertar(self, empresa, departamento, usuario, nombreCompleto, password):
        # print(usuario+"   "+password)
         if self.verticales.existeV(departamento) == False:
@@ -661,55 +747,55 @@ class matriz:
             return
         cabeza = self.horizontales.primero
         lateral = self.verticales.primero
-        file = open(path+"matriz.dot", "w")
+        file = open(escritorio+"\\matriz.dot", "w")
         file.write("digraph G{\n")
-        file.write("nodoR[label=\"Inicio\", style = filled, fillcolor = \"#FF4000\", group = rr]\n")
-        file.write("{rank = same; nodoR nodoc" + self.obtenerHASH(cabeza) + "}\n")
-        file.write("nodoR -> nodoc" + self.obtenerHASH(cabeza) + "\n")
+        file.write("\"nodoR\"[label=\"Inicio\", style = filled, fillcolor = \"red:yellow\", shape = \"box\", gradientangle=\"90\", group = rr]\n")
+        file.write("{rank = same; \"nodoR\" \"nodoc" + self.obtenerHASH(cabeza) + "\"}\n")
+        file.write("\"nodoR\" -> \"nodoc" + self.obtenerHASH(cabeza) + "\"\n")
         # graficando cabezas
         while cabeza != None:
 
-            file.write("nodoc" + self.obtenerHASH(cabeza) + "[label = \"" + cabeza.empresa + "\", style = filled, fillcolor = \"#FF4000\", group = r" + self.obtenerHASH(cabeza) + "]\n")
+            file.write("\"nodoc" + self.obtenerHASH(cabeza) + "\"[label = \"" + cabeza.empresa + "\", style = filled, fillcolor = \"red:yellow\",shape = \"box\", gradientangle=\"90\", group = r" + self.obtenerHASH(cabeza) + "]\n")
             if cabeza.siguiente != None:
-                file.write("{rank = same; nodoc" + self.obtenerHASH(cabeza) + " nodoc" + self.obtenerHASH(
-                    cabeza.siguiente) + "}\n")
-                file.write("nodoc" + self.obtenerHASH(cabeza) + " -> nodoc" + self.obtenerHASH(cabeza.siguiente) + "\n")
+                file.write("{rank = same; \"nodoc" + self.obtenerHASH(cabeza) + "\"  \"nodoc" + self.obtenerHASH(
+                    cabeza.siguiente) + "\"}\n")
+                file.write("\"nodoc" + self.obtenerHASH(cabeza) + "\" -> \"nodoc" + self.obtenerHASH(cabeza.siguiente) + "\"\n")
             if cabeza.anterior != None:
-                file.write("{rank = same; nodoc" + self.obtenerHASH(cabeza) + " nodoc" + self.obtenerHASH(
-                    cabeza.anterior) + "}\n")
-                file.write("nodoc" + self.obtenerHASH(cabeza) + " -> nodoc" + self.obtenerHASH(cabeza.anterior) + "\n")
+                file.write("{rank = same; \"nodoc" + self.obtenerHASH(cabeza) + "\"  \"nodoc" + self.obtenerHASH(
+                    cabeza.anterior) + "\"}\n")
+                file.write("\"nodoc" + self.obtenerHASH(cabeza) + "\" -> \"nodoc" + self.obtenerHASH(cabeza.anterior) + "\"\n")
             cabeza = cabeza.siguiente
-        file.write("nodoR -> nodol" + self.obtenerHASH(lateral) + "\n")
+        file.write("\"nodoR\" -> \"nodol" + self.obtenerHASH(lateral) + "\"\n")
         while lateral != None:
-            file.write("nodol" + self.obtenerHASH(
-                lateral) + "[label = \"" + lateral.departamento + "\", style = filled, fillcolor = \"#FF4000\", group = rr]\n")
+            file.write("\"nodol" + self.obtenerHASH(
+                lateral) + "\"[label = \"" + lateral.departamento + "\", style = filled, fillcolor = \"red:yellow\",shape = \"box\", gradientangle=\"90\", group = rr]\n")
             if lateral.siguiente != None:
                 file.write(
-                    "nodol" + self.obtenerHASH(lateral) + " -> nodol" + self.obtenerHASH(lateral.siguiente) + "\n")
+                    "\"nodol" + self.obtenerHASH(lateral) + "\" -> \"nodol" + self.obtenerHASH(lateral.siguiente) + "\"\n")
             if lateral.anterior != None:
                 file.write(
-                    "nodol" + self.obtenerHASH(lateral) + " -> nodol" + self.obtenerHASH(lateral.anterior) + "\n")
+                    "\"nodol" + self.obtenerHASH(lateral) + "\" -> \"nodol" + self.obtenerHASH(lateral.anterior) + "\"\n")
             lateral = lateral.siguiente
         cabeza = self.horizontales.primero
         while cabeza != None:
             enMatriz = cabeza.lista.primero
             file.write("subgraph s" + self.obtenerHASH(cabeza) + "{\n")
             while enMatriz != None:
-                file.write("nodoc" + self.obtenerHASH(enMatriz) + "l" + self.obtenerHASH(enMatriz) + "[label = \"" + enMatriz.lista.primero.nombreCompleto + "\", style = filled, fillcolor = \"#FF4000\", group = r" + self.obtenerHASH(cabeza) + "]\n")
+                file.write("\"nodoc" + self.obtenerHASH(enMatriz) + "l" + self.obtenerHASH(enMatriz) + "\"[label = \"" + enMatriz.lista.primero.nombreCompleto + "\", style = filled, fillcolor = \"red:yellow\",shape = \"box\", gradientangle=\"90\", group = r" + self.obtenerHASH(cabeza) + "]\n")
                 if enMatriz.lista.primero.siguiente != None:
                     tm = enMatriz.lista.primero.siguiente
-                    file.write("nodoc" + self.obtenerHASH(enMatriz) + "l" + self.obtenerHASH(
-                        enMatriz) + " -> nodoS" + self.obtenerHASH(tm) + "\n")
-                    file.write("nodoS" + self.obtenerHASH(tm) + " -> " + "nodoc" + self.obtenerHASH(
-                        enMatriz) + "l" + self.obtenerHASH(enMatriz) + "\n")
+                    file.write("\"nodoc" + self.obtenerHASH(enMatriz) + "l" + self.obtenerHASH(
+                        enMatriz) + "\" -> \"nodoS" + self.obtenerHASH(tm) + "\"\n")
+                    file.write("\"nodoS" + self.obtenerHASH(tm) + "\" -> " + "\"nodoc" + self.obtenerHASH(
+                        enMatriz) + "l" + self.obtenerHASH(enMatriz) + "\"\n")
                     while tm != None:
-                        file.write("nodoS" + self.obtenerHASH(
-                            tm) + "[label = \"" + tm.nombreCompleto + "\", style = filled, fillcolor = \"#00FF00\"]\n")
+                        file.write("\"nodoS" + self.obtenerHASH(
+                            tm) + "\"[label = \"" + tm.nombreCompleto + "\", style = filled, fillcolor = \"red:yellow\", gradientangle=\"90\",shape = \"box\"]\n")
                         if tm.siguiente != None:
                             file.write(
-                                "nodoS" + self.obtenerHASH(tm) + " -> nodoS" + self.obtenerHASH(tm.siguiente) + "\n")
+                                "\"nodoS" + self.obtenerHASH(tm) + "\" -> \"nodoS" + self.obtenerHASH(tm.siguiente) + "\"\n")
                             file.write(
-                                "nodoS" + self.obtenerHASH(tm.siguiente) + "-> nodoS" + self.obtenerHASH(tm) + "\n")
+                                "\"nodoS" + self.obtenerHASH(tm.siguiente) + "\" -> \"nodoS" + self.obtenerHASH(tm) + "\"\n")
                         tm = tm.siguiente
                 enMatriz = enMatriz.abajo
             file.write("}\n")
@@ -719,28 +805,28 @@ class matriz:
             enMatriz = cabeza.lista.primero
             while enMatriz != None:
                 if enMatriz.derecha != None:
-                    file.write("nodoc" + self.obtenerHASH(enMatriz) + "l" + self.obtenerHASH(
-                        enMatriz) + " -> " + "nodoc" + self.obtenerHASH(enMatriz.derecha) + "l" + self.obtenerHASH(
-                        enMatriz.derecha) + "\n")
-                    file.write("{rank = same; " + " nodoc" + self.obtenerHASH(enMatriz) + "l" + self.obtenerHASH(
-                        enMatriz) + " " + "nodoc" + self.obtenerHASH(enMatriz.derecha) + "l" + self.obtenerHASH(
-                        enMatriz.derecha) + "}\n")
+                    file.write("\"nodoc" + self.obtenerHASH(enMatriz) + "l" + self.obtenerHASH(
+                        enMatriz) + "\" -> \"" + "nodoc" + self.obtenerHASH(enMatriz.derecha) + "l" + self.obtenerHASH(
+                        enMatriz.derecha) + "\"\n")
+                    file.write("{rank = same; " + " \"nodoc" + self.obtenerHASH(enMatriz) + "l" + self.obtenerHASH(
+                        enMatriz) + "\"  " + "\"nodoc" + self.obtenerHASH(enMatriz.derecha) + "l" + self.obtenerHASH(
+                        enMatriz.derecha) + "\"}\n")
                 if enMatriz.izquierda != None:
-                    file.write("nodoc" + self.obtenerHASH(enMatriz) + "l" + self.obtenerHASH(
-                        enMatriz) + " -> " + "nodoc" + self.obtenerHASH(enMatriz.izquierda) + "l" + self.obtenerHASH(
-                        enMatriz.izquierda) + "\n")
-                    file.write("{rank = same; " + " nodoc" + self.obtenerHASH(enMatriz) + "l" + self.obtenerHASH(
-                        enMatriz) + " " + "nodoc" + self.obtenerHASH(enMatriz.izquierda) + "l" + self.obtenerHASH(
-                        enMatriz.izquierda) + "}\n")
+                    file.write("\"nodoc" + self.obtenerHASH(enMatriz) + "l" + self.obtenerHASH(
+                        enMatriz) + "\" -> \"" + "nodoc" + self.obtenerHASH(enMatriz.izquierda) + "l" + self.obtenerHASH(
+                        enMatriz.izquierda) + "\"\n")
+                    file.write("{rank = same; " + " \"nodoc" + self.obtenerHASH(enMatriz) + "l" + self.obtenerHASH(
+                        enMatriz) + "\"  " + "\"nodoc" + self.obtenerHASH(enMatriz.izquierda) + "l" + self.obtenerHASH(
+                        enMatriz.izquierda) + "\"}\n")
                 if enMatriz.abajo != None:
-                    file.write("nodoc" + self.obtenerHASH(enMatriz) + "l" + self.obtenerHASH(
-                        enMatriz) + " -> " + "nodoc" + self.obtenerHASH(enMatriz.abajo) + "l" + self.obtenerHASH(
-                        enMatriz.abajo) + "\n")
+                    file.write("\"nodoc" + self.obtenerHASH(enMatriz) + "l" + self.obtenerHASH(
+                        enMatriz) + "\" -> " + "\"nodoc" + self.obtenerHASH(enMatriz.abajo) + "l" + self.obtenerHASH(
+                        enMatriz.abajo) + "\"\n")
                     # file.write("{rank = same; " + " nodoc" + enMatriz.empresa + "l" + enMatriz.inicialDireccion + " " + "nodoc" + enMatriz.arriba.empresa + "l" + enMatriz.arriba.inicialDireccion)
                 if enMatriz.arriba != None:
-                    file.write("nodoc" + self.obtenerHASH(enMatriz) + "l" + self.obtenerHASH(
-                        enMatriz) + " -> " + "nodoc" + self.obtenerHASH(enMatriz.arriba) + "l" + self.obtenerHASH(
-                        enMatriz.arriba) + "\n")
+                    file.write("\"nodoc" + self.obtenerHASH(enMatriz) + "l" + self.obtenerHASH(
+                        enMatriz) + "\" -> \"" + "nodoc" + self.obtenerHASH(enMatriz.arriba) + "l" + self.obtenerHASH(
+                        enMatriz.arriba) + "\"\n")
                     # file.write("{rank = same; " + " nodoc" + enMatriz.empresa + "l" + enMatriz.inicialDireccion + " " + "nodoc" + enMatriz.arriba.empresa + "l" + enMatriz.arriba.inicialDireccion)
                 enMatriz = enMatriz.abajo
             cabeza = cabeza.siguiente
@@ -749,23 +835,23 @@ class matriz:
         while lateral != None:
             enMatriz = lateral.lista.primero
             if lateral.lista.primero != None:
-                file.write("nodol" + self.obtenerHASH(lateral) + " -> " + "nodoc" + self.obtenerHASH(
-                    enMatriz) + "l" + self.obtenerHASH(enMatriz) + "\n")
-                file.write("{rank = same; " + "nodol" + self.obtenerHASH(lateral) + " " + "nodoc" + self.obtenerHASH(
-                    enMatriz) + "l" + self.obtenerHASH(enMatriz) + "}\n")
+                file.write("\"nodol" + self.obtenerHASH(lateral) + "\" -> \"" + "nodoc" + self.obtenerHASH(
+                    enMatriz) + "l" + self.obtenerHASH(enMatriz) + "\"\n")
+                file.write("{rank = same; " + "\"nodol" + self.obtenerHASH(lateral) + "\"  " + "\"nodoc" + self.obtenerHASH(
+                    enMatriz) + "l" + self.obtenerHASH(enMatriz) + "\"}\n")
             lateral = lateral.siguiente
         # file.write("}\n")
         cabeza = self.horizontales.primero
         while cabeza != None:
             enMatriz = cabeza.lista.primero
             if cabeza.lista.primero != None:
-                file.write("nodoc" + self.obtenerHASH(cabeza) + " -> nodoc" + self.obtenerHASH(
-                    enMatriz) + "l" + self.obtenerHASH(enMatriz) + "\n")
+                file.write("\"nodoc" + self.obtenerHASH(cabeza) + "\" -> \"nodoc" + self.obtenerHASH(
+                    enMatriz) + "l" + self.obtenerHASH(enMatriz) + "\"\n")
             cabeza = cabeza.siguiente
 
         file.write("}\n")
         file.close()
-        os.system("dot -Tpng "+path+"matriz.dot > "+path+"matriz.png")
+        os.system("dot -Tpng "+escritorio+"\\matriz.dot > "+escritorio+"\\matriz.png")
     def eliminar(self, cad):
         pedasos = cad.split("@")
         dir = pedasos[0]
@@ -807,10 +893,50 @@ class matriz:
                 # print "pasa eliminacion de nodo vertical"
     def modificarActivo(self, empresa, departamento, usuario, id, nuevaD):
         self.horizontales.modificarActivo(departamento,empresa,usuario,id,nuevaD)
+    def existeUsuario(self, departamento, empresa, usuario):
+        temporal = self.horizontales.primero
+        while temporal!=None:
+            if temporal.empresa == empresa:
+                aux = temporal.lista.primero
+                while aux!=None:
+                    if aux.departamento == departamento:
+                        tm = aux.lista.primero
+                        while tm!=None:
+                            if tm.usuario == usuario:
+                                return True
+                            tm = tm.siguiente
+                    aux = aux.abajo
+            temporal = temporal.siguiente
+        return False
+    def tieneActivos(self, departamento, empresa, usuario):
+        temporal = self.horizontales.primero
+        while temporal != None:
+            if temporal.empresa == empresa:
+                aux = temporal.lista.primero
+                while aux != None:
+                    if aux.departamento == departamento:
+                        tm = aux.lista.primero
+                        while tm != None:
+                            if tm.usuario == usuario and tm.activos.raizG!=None:
+                                return True
+                            tm = tm.siguiente
+                    aux = aux.abajo
+            temporal = temporal.siguiente
+        return False
+
+
 class AVL:
     def __init__(self):
         self.raizG=None
-
+    def listarAReporte(self, raiz):
+        if raiz==None:
+            return
+        nodo = nodoLista(raiz)
+        reporte.cabeza =  reporte.insertar(nodo)
+        if raiz.izquierdo:
+            self.listarAReporte(raiz.izquierdo)
+        if raiz.derecho:
+            self.listarAReporte(raiz.derecho)
     def esHoja(self, nodo):
         if nodo==None:
             return False
@@ -958,9 +1084,9 @@ class AVL:
         file.write(self.graficarNodoAVL(raiz))
         file.write("}\n")
         file.close()
-        os.system("dot -Tpng "+escritorio+"\\avl.dot > "+escritorio+"\avl.png")
+        os.system("dot -Tpng "+escritorio+"\\avl.dot > "+escritorio+"\\avl.png")
     def graficarNodoAVL(self, nodo):
-        cadena = "nodo"+self.obtenerHASH(nodo)+"[label=\"<f0>|<f1>"+nodo.nombre+"\n"+nodo.descripcion+"|<f2>\", shape=record,style=filled,fillcolor=\"#000FFF\"]\n"
+        cadena = "nodo"+self.obtenerHASH(nodo)+"[label=\"<f0>|<f1>"+nodo.nombre+" \\n"+nodo.descripcion+"|<f2>\", shape=record,style=filled,fillcolor=\"blue:cyan\", gradientangle=\"270\"]\n"
         if nodo.izquierdo:
             cadena+=self.graficarNodoAVL(nodo.izquierdo)
             cadena+= "nodo"+self.obtenerHASH(nodo)+":f0 -> "+"nodo"+self.obtenerHASH(nodo.izquierdo)+"\n"
@@ -989,7 +1115,7 @@ class AVL:
     def retornarID(self, raiz):
         cadena = ""
         if raiz==None:
-            return
+            return cadena
         cadena+= raiz.id+","+raiz.nombre+","+raiz.descripcion
         if raiz.derecho:
             cadena+=","+self.retornarID(raiz.derecho)
@@ -1006,6 +1132,7 @@ class AVL:
             return self.retornarDesripcion(raiz.derecho, id)
         if raiz.id>id:
             return self.retornarDesripcion(raiz.izquierdo, id)
+
 ma = matriz()
 @app.route('/insertarUsuario', methods= ['POST'])
 def insertarUsuario():
@@ -1021,8 +1148,7 @@ def insertarUsuario():
 def graficarMatriz():
     nombre = str(request.form['p'])
     ma.graficarMatriz()
-    f = (path+"matriz.png")
-    return send_file(path+"matriz.png", attachment_filename="matriz.png")
+    return send_file(escritorio+"\\matriz.png", attachment_filename="matriz.png")
 @app.route('/insertarActivo', methods= ['POST'])
 def insertarActivo():
     usuario = str(request.form['usuario'])
@@ -1046,8 +1172,17 @@ def graficarAVL():
     usuario = str(request.form['usuario'])
     departamento = str(request.form['departamento'])
     empresa = str(request.form['empresa'])
-    ma.graficarAVLPorUsuario(usuario, empresa, departamento)
-    return "direccion de avl"
+    if ma.existeUsuario(departamento, empresa, usuario):
+        if ma.tieneActivos(departamento, empresa, usuario):
+            ma.graficarAVLPorUsuario(usuario, empresa, departamento)
+            print "lo encontro\n"
+            return send_file(escritorio + "\\avl.png", attachment_filename="avl.png")
+        else:
+            return send_file(escritorio + "\\noActivos.png", attachment_filename="noActivos.png")
+
+    else:
+        return send_file(escritorio + "\\error.png", attachment_filename="error.png")
+
 @app.route('/verificarLogin', methods= ['POST'])
 def verificarLogin():
     usuario = str(request.form['usuario'])
@@ -1070,7 +1205,8 @@ def devolverPath():
     return path+"matriz.png"
 @app.route('/usuarios', methods= ['POST'])
 def usuarios():
-    p = str(request(['p']))
+    usuario = str(request.form['p'])
+    print ma.retornarUsuarios()
     return ma.retornarUsuarios()
 @app.route('/retornarActivos', methods = ['POST'])
 def retornarActivos():
@@ -1079,40 +1215,6 @@ def retornarActivos():
     empresa = str(request.form['empresa'])
    # password = str(request.form['password'])
     return str(ma.horizontales.devolverID(departamento, empresa, usuario))
-class nodoLista:
-
-    def __init__(self, activo):
-        self.siguiente = None
-        self.activo = activo
-class listaParaReporte:
-    def __init__(self):
-        self.cabeza = None
-    def insertar(self, nuevo):
-        if self.cabeza==None:
-            self.cabeza == nuevo
-        else:
-            nuevo.siguiente = self.cabeza
-            self.cabeza = nuevo
-    def obtenerHASH(self, objeto):
-        id = hash(objeto)
-        if int(id) < 0:
-            return str((-1 * id))
-        return str(id)
-    def graficar(self):
-        if self.cabeza == None:
-            return
-        temporal = self.cabeza
-        file = open(escritorio+"\\reporte.dot", "w")
-        file.write("digraph G{\n")
-        while temporal!=None:
-            file.write("nodo" + self.obtenerHASH(
-                temporal) + "[label=\"" + temporal.nombre + "\", style = filled, fillcolor = \"#FF4000\"]\n")
-            if temporal.siguiente!=None:
-                file.write("nodo"+self.obtenerHASH(temporal)+" -> "+"nodo"+self.obtenerHASH(temporal.siguiente))
-        file.write("}")
-        file.close()
-        os.system("dot -Tpng "+escritorio+"\\reporte.dot > "+escritorio+"\\reporte.png")
-reporte =listaParaReporte()
 @app.route('/descripcionActivo', methods= ['POST'])
 def descripcionActivo():
     usuario = str(request['usuario'])
@@ -1120,10 +1222,50 @@ def descripcionActivo():
     departamento = str(request['departamento'])
     id = str(request['id'])
     return ma.horizontales.devolverDescripcionPorID(departamento, usuario, empresa, id)
-ma.insertar("uno","dos","prueba","jose","123")
-ma.insertarActivo("uno", "dos", "prueba", "impresogra", "dsasf", "1")
-ma.insertarActivo("uno", "dos", "prueba", "impresogra", "dsasf", "2")
+@app.route('/reportePorDepartamento', methods = ['POST'])
+def reporteDepartamento():
+    departamento = str(request.form['departamento'])
+    ma.verticales.reportePorDepartamento(departamento)
+    return send_file(escritorio+"\\reporte.png", attachment_filename="reporte.png")
+@app.route('/reportePorEmpresa', methods = ['POST'])
+def reporteEmpresa():
+    empresa = str(request.form['empresa'])
+    ma.horizontales.reportePorEmpresa(empresa)
+    return send_file(escritorio+"\\reporte.png", attachment_filename="reporte.png")
+@app.route('/departamentos', methods = ['POST'])
+def departamentos():
+    p = str(request.form['p'])
+    print ma.verticales.listarDepartamentos()
+    return ma.verticales.listarDepartamentos()
+@app.route('/empresas', methods = ['POST'])
+def empresas():
+    p = str(request.form['p'])
+    print ma.horizontales.devolverEmpresas()
+    return ma.horizontales.devolverEmpresas()
+@app.route('/listarUsuarios', methods = ['POST'])
+def usus():
+    parametro = str(request.form['p'])
+    print ma.retornarUsu()
+    return ma.retornarUsu()
+@app.route('/activos', methods = ['POST'])
+def activos():
+    parametro = str(request.form['p'])
+    print ma.horizontales.todosLosActivos()
+    return ma.horizontales.todosLosActivos()
+ma.insertar("udo","dos","prueba","jose","123")
+ma.insertar("unqo","dgos","pueba","jose","123")
+ma.insertar("un2o","dos","prueba","jose","123")
+ma.insertar("uno3","d7os","preba","jose","123")
+ma.insertar("unoe","dos","prueb","jose","123")
+ma.insertar("unoe","dos","pb","jose","123")
+ma.insertarActivo("uno", "dos", "prueba", "Impresora", "Esta es la descripcion", "1")
+ma.insertarActivo("uno", "dos", "prueba", "Impresora", "Descripcion2", "2")
 ma.horizontales.devolverID("dos", "uno", "prueba")
+ma.graficarMatriz()
+ma.horizontales.reportePorEmpresa("uno")
+ma.graficarAVLPorUsuario("prueba", "uno", "dos")
+print "los activos son"+ma.horizontales.todosLosActivos()
+ma.graficarMatriz()
 if __name__ == '__main__':
     app.run(debug = True, host = '192.168.43.180')
 
