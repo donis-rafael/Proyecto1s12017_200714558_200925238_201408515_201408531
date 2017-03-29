@@ -1,0 +1,11 @@
+
+digraph G {
+ node [shape=record] ;
+Nodo0[label="<P0>|135465X\nASDASD
+\nASDASD
+\nASDSD
+\nSFSDF
+\nSDFDFS
+\nTYRT
+|<P1>"];
+}
